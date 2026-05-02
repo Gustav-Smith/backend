@@ -4,22 +4,22 @@ import express from 'express'
 import cors from 'cors'
 import 'dotenv/config'
 
-// Importa as rotas de promotores
 import promotorRoutes from './routes/promotorRoutes'
+import lojaRoutes from './routes/lojaRoutes'
+import visitaRoutes from './routes/visitaRoutes'
 
 const app = express()
 
 app.use(express.json())
 app.use(cors())
 
-// Rota de saúde da API
 app.get('/', (req, res) => {
   res.json({ mensagem: 'API de Promotores funcionando! 🚀' })
 })
 
-// Registra as rotas — todos os endpoints de /promotores
-// ficam organizados no arquivo promotorRoutes
 app.use('/promotores', promotorRoutes)
+app.use('/lojas', lojaRoutes)
+app.use('/visitas', visitaRoutes)
 
 const PORT = process.env.PORT || 3333
 
