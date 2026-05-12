@@ -49,10 +49,13 @@ export const buscarPorId = async (req: Request, res: Response) => {
 // ── POST /visitas ───────────────────────────────────────────
 export const criar = async (req: Request, res: Response) => {
   try {
-    const { data, promotorId, lojaId, observacoes } = req.body
+    const { data, promotorId, lojaId, cidade, estado, observacao } = req.body
 
-    if (!data || !promotorId || !lojaId) {
-      res.status(400).json({ mensagem: 'Data, promotorId e lojaId são obrigatórios' })
+    // Todos os campos obrigatórios do padrão de visita
+    if (!data || !promotorId || !lojaId || !cidade || !estado) {
+      res.status(400).json({
+        mensagem: 'Os campos data, promotorId, lojaId, cidade e estado são obrigatórios',
+      })
       return
     }
 
@@ -60,7 +63,9 @@ export const criar = async (req: Request, res: Response) => {
       data,
       promotorId: Number(promotorId),
       lojaId: Number(lojaId),
-      observacoes,
+      cidade,
+      estado,
+      observacao,
     })
 
     res.status(201).json(visita)
@@ -77,9 +82,16 @@ export const criar = async (req: Request, res: Response) => {
 export const atualizar = async (req: Request, res: Response) => {
   try {
     const id = Number(req.params.id)
-    const { status, observacoes, data } = req.body
+    const { data, cidade, estado, observacao, status } = req.body
 
-    const visita = await visitaService.atualizarVisita(id, { status, observacoes, data })
+    const visita = await visitaService.atualizarVisita(id, {
+      data,
+      cidade,
+      estado,
+      observacao,
+      status,
+    })
+
     res.json(visita)
   } catch (error) {
     if (error instanceof Error) {

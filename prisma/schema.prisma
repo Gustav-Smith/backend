@@ -1,62 +1,39 @@
-// prisma/schema.prisma
-
-generator client {
-  provider = "prisma-client-js"
-}
-
 datasource db {
   provider = "postgresql"
 }
 
-// Tabela de usuários — quem faz login no sistema
-model Usuario {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  email     String    @unique
-  senha     String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// Tabela de promotores — os profissionais que visitam as lojas
-model Promotor {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  email     String    @unique
-  telefone  String?   // o ? significa que é opcional
-  ativo     Boolean   @default(true)
-  visitas   Visita[]  // um promotor pode ter várias visitas
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// Tabela de lojas — os locais que os promotores visitam
-model Loja {
-  id        Int       @id @default(autoincrement())
-  nome      String
-  endereco  String
-  cidade    String
-  ativo     Boolean   @default(true)
-  visitas   Visita[]  // uma loja pode ter várias visitas
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// Tabela de visitas — o registro de cada visita feita
 model Visita {
   id          Int       @id @default(autoincrement())
   data        DateTime
-  status      String    @default("pendente") // pendente | concluida | cancelada
-  observacoes String?
-  
-  // Chaves estrangeiras — ligam a visita ao promotor e à loja
+
+  // Campos do padrão de visita
+  observacao  String?   // renomeado de observacoes para observacao
+
+  // Cidade e Estado ficam na Visita pois podem ser diferentes da loja
+  cidade      String
+  estado      String
+
+  // Chaves estrangeiras
   promotorId  Int
   lojaId      Int
-  
-  // Relacionamentos — permitem acessar os dados do promotor e da loja
+
+  // Relacionamentos
   promotor    Promotor  @relation(fields: [promotorId], references: [id])
   loja        Loja      @relation(fields: [lojaId], references: [id])
-  
+
+  status      String    @default("pendente")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model Promotor {
+  id Int @id @default(autoincrement())
+  nome String
+  visitas Visita[]
+}
+
+model Loja {
+  id Int @id @default(autoincrement())
+  nome String
+  visitas Visita[]
 }

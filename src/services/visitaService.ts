@@ -2,22 +2,25 @@
 
 import { prisma } from '../prisma'
 
-// ── Listar visitas (com filtros opcionais) ──────────────────
+// ── Listar visitas ──────────────────────────────────────────
 export const listarVisitas = async (filtros?: {
   promotorId?: number
   lojaId?: number
   status?: string
+  cidade?: string
+  estado?: string
 }) => {
   return prisma.visita.findMany({
     where: {
-      // só aplica o filtro se o valor foi passado
       promotorId: filtros?.promotorId,
       lojaId: filtros?.lojaId,
       status: filtros?.status,
+      cidade: filtros?.cidade,
+      estado: filtros?.estado,
     },
     include: {
-      promotor: true, // traz os dados do promotor junto
-      loja: true,     // traz os dados da loja junto
+      promotor: true,
+      loja: true,
     },
     orderBy: { data: 'desc' },
   })
@@ -39,7 +42,9 @@ export const criarVisita = async (dados: {
   data: string
   promotorId: number
   lojaId: number
-  observacoes?: string
+  cidade: string
+  estado: string
+  observacao?: string
 }) => {
   // Verifica se o promotor existe
   const promotor = await prisma.promotor.findUnique({
@@ -55,10 +60,12 @@ export const criarVisita = async (dados: {
 
   return prisma.visita.create({
     data: {
-      data: new Date(dados.data), // converte a string para Date
+      data: new Date(dados.data),
       promotorId: dados.promotorId,
       lojaId: dados.lojaId,
-      observacoes: dados.observacoes,
+      cidade: dados.cidade,
+      estado: dados.estado,
+      observacao: dados.observacao,
     },
     include: {
       promotor: true,
@@ -67,19 +74,20 @@ export const criarVisita = async (dados: {
   })
 }
 
-// ── Atualizar status ou observações ────────────────────────
+// ── Atualizar uma visita ────────────────────────────────────
 export const atualizarVisita = async (
   id: number,
   dados: {
-    status?: string
-    observacoes?: string
     data?: string
+    cidade?: string
+    estado?: string
+    observacao?: string
+    status?: string
   }
 ) => {
   const visita = await prisma.visita.findUnique({ where: { id } })
   if (!visita) throw new Error('Visita não encontrada')
 
-  // Valida o status se ele foi enviado
   const statusValidos = ['pendente', 'concluida', 'cancelada']
   if (dados.status && !statusValidos.includes(dados.status)) {
     throw new Error('Status inválido. Use: pendente, concluida ou cancelada')
@@ -88,10 +96,11 @@ export const atualizarVisita = async (
   return prisma.visita.update({
     where: { id },
     data: {
-      status: dados.status,
-      observacoes: dados.observacoes,
-      // só converte a data se ela foi enviada
       data: dados.data ? new Date(dados.data) : undefined,
+      cidade: dados.cidade,
+      estado: dados.estado,
+      observacao: dados.observacao,
+      status: dados.status,
     },
     include: {
       promotor: true,
@@ -109,7 +118,6 @@ export const deletarVisita = async (id: number) => {
 }
 
 // ── Métricas para o dashboard ───────────────────────────────
-// Já vamos criar essa função aqui pois o dashboard vai precisar dela
 export const buscarMetricas = async () => {
   const [total, concluidas, pendentes, canceladas] = await Promise.all([
     prisma.visita.count(),
@@ -118,7 +126,6 @@ export const buscarMetricas = async () => {
     prisma.visita.count({ where: { status: 'cancelada' } }),
   ])
 
-  // Top 5 promotores com mais visitas concluídas
   const topPromotores = await prisma.visita.groupBy({
     by: ['promotorId'],
     where: { status: 'concluida' },
@@ -127,11 +134,5 @@ export const buscarMetricas = async () => {
     take: 5,
   })
 
-  return {
-    total,
-    concluidas,
-    pendentes,
-    canceladas,
-    topPromotores,
-  }
+  return { total, concluidas, pendentes, canceladas, topPromotores }
 }
